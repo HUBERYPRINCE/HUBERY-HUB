@@ -349,7 +349,7 @@ function buildAmortGrid() {
       <div class="chip-input">
         <span class="prefix">￥</span>
         <input type="number" step="0.01" min="0" value="${c.amort_rmb}" data-idx="${idx}" />
-        <span class="suffix">RMB</span>
+            <span class="suffix">${c.currency}</span>
       </div>`;
     wrap.appendChild(div);
   });
