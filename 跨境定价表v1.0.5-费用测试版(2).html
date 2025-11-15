@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <meta name="color-scheme" content="light" />
-<title>💎跨境价格定价计算💎</title>
+<title>跨境价格定价计算</title>
 <style>
 :root {
   --bg: #eef1f6;
@@ -428,13 +428,13 @@ function buildFeesGrid() {
       render();
     });
   });
-}
+ }
 function resetFees() {
   COUNTRIES.forEach((c,i)=>{
     c.fee_platform = FEE_PLATFORM_DEFAULTS[i];
     c.fee_tx = FEE_TX_DEFAULTS[i];
     c.fee_activity = FEE_ACTIVITY_DEFAULTS[i];
- });
+  });
   buildFeesGrid();
   render();
 }
@@ -479,6 +479,7 @@ function loadSavedFees() {
   } catch(err) {
     console.warn('载入费用率失败', err);
   }
+}
 
 function buildInfluGrid() {
   const wrap = document.getElementById('influGrid'); wrap.innerHTML = '';
