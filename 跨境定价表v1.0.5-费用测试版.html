@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <meta name="color-scheme" content="light" />
-<title>定价表（iOS 风格·v6 对齐修复）</title>
+<title>跨境定价计算器</title>
 <style>
 :root {
   --bg: #eef1f6;
@@ -202,7 +202,10 @@ tbody td:nth-child(3), tbody td:nth-child(4), tbody td:nth-child(5), tbody td:nt
         <div class="header" id="feesHeader"><span class="chevron">›</span><div class="label">平台 / 交易 / 活动费率（%）按国家调整</div></div>
         <div class="body">
           <div class="fees-grid" id="feesGrid"></div>
-          <div class="cluster" style="justify-content:flex-end;"><button class="btn" id="btnFeesReset">恢复默认费用率</button></div>
+<div class="cluster" style="justify-content:flex-end; gap:8px;">
+  <button class="btn" id="btnFeesSave">保存参数</button>
+  <button class="btn" id="btnFeesReset">恢复默认费用率</button>
+</div>  
         </div>
       </div>
 
@@ -434,6 +437,41 @@ function resetFees() {
   buildFeesGrid(); 
   render(); 
 }
+function saveFees() {
+  try {
+    const fees = COUNTRIES.map(c => ({
+      fp: c.fee_platform,
+      ft: c.fee_tx,
+      fa: c.fee_activity
+    }));
+    localStorage.setItem(
+      'pricing_fees_v1',
+      JSON.stringify({ time: Date.now(), fees })
+    );
+    showToast('费用率参数已保存到浏览器（本地）');
+  } catch (err) {
+    alert('保存费用率失败：' + err.message);
+  }
+}
+
+function loadSavedFees() {
+  try {
+    const raw = localStorage.getItem('pricing_fees_v1');
+    if (!raw) return;
+    const obj = JSON.parse(raw);
+    if (!obj || !Array.isArray(obj.fees)) return;
+
+    obj.fees.forEach((row, idx) => {
+      const c = COUNTRIES[idx];
+      if (!c || !row) return;
+      if (typeof row.fp === 'number') c.fee_platform = row.fp;
+      if (typeof row.ft === 'number') c.fee_tx = row.ft;
+      if (typeof row.fa === 'number') c.fee_activity = row.fa;
+    });
+  } catch (err) {
+    console.warn('载入费用率参数失败', err);
+  }
+}
 
 function buildInfluGrid() {
   const wrap = document.getElementById('influGrid'); wrap.innerHTML = '';
@@ -625,6 +663,7 @@ setupCollapsible('tileFees','feesHeader');
 document.getElementById('btnAmortReset').addEventListener('click', resetAmort);
 document.getElementById('btnInfluReset').addEventListener('click', resetInflu);
 document.getElementById('btnFeesReset').addEventListener('click', resetFees);
+document.getElementById('btnFeesSave').addEventListener('click', saveFees);
 document.getElementById('btnFeeRates').addEventListener('click', () => {
   const tile = document.getElementById('tileFees');
   const collapsed = tile.getAttribute('data-collapsed') === 'true';
@@ -646,7 +685,10 @@ document.getElementById('modal').addEventListener('click', (e)=>{ if (e.target =
 document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeModal(); });
 
 /* Start */
+loadSavedFees();
 resetDefaults();
+buildFeesGrid();
 </script>
+
 </body>
 </html>
