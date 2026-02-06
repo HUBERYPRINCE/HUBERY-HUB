@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HUBERY Words (iOS Glass • Clean BG)</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root{
+      --glass-bg: rgba(255,255,255,.58);
+      --glass-bg-2: rgba(255,255,255,.40);
+      --glass-border: rgba(255,255,255,.62);
+      --text: #0b1220;
+      --muted: rgba(10, 20, 40, .55);
+      --shadow: 0 18px 46px rgba(0,0,0,.14);
+      --shadow-soft: 0 10px 24px rgba(0,0,0,.10);
+      --radius: 26px;
+      --radius-sm: 18px;
+      --blur: 18px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root{
+        --glass-bg: rgba(15,18,30,.58);
+        --glass-bg-2: rgba(15,18,30,.40);
+        --glass-border: rgba(255,255,255,.14);
+        --text: rgba(255,255,255,.92);
+        --muted: rgba(255,255,255,.58);
+        --shadow: 0 22px 60px rgba(0,0,0,.55);
+        --shadow-soft: 0 10px 25px rgba(0,0,0,.38);
+      }
+    }
+
+    html, body {
+      height: 100%;
+      font-family: ui-sans-serif, system-ui, -apple-system, "SF Pro Display", "SF Pro Text", "Inter",
+                   "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+    }
+
+    /* ===== Clean, sharp gradient background (NO animation) ===== */
+    body{
+      overflow-x: hidden;
+      position: relative;
+      background:
+        radial-gradient(900px 700px at 12% 12%, rgba(99,102,241,.22), transparent 60%),
+        radial-gradient(900px 700px at 88% 14%, rgba(236,72,153,.16), transparent 58%),
+        radial-gradient(900px 700px at 50% 98%, rgba(34,197,94,.12), transparent 58%),
+        linear-gradient(180deg, rgba(255,255,255,.94), rgba(240,244,255,.96));
+    }
+    @media (prefers-color-scheme: dark){
+      body{
+        background:
+          radial-gradient(900px 700px at 12% 12%, rgba(99,102,241,.18), transparent 60%),
+          radial-gradient(900px 700px at 88% 14%, rgba(236,72,153,.12), transparent 58%),
+          radial-gradient(900px 700px at 50% 98%, rgba(34,197,94,.08), transparent 58%),
+          linear-gradient(180deg, rgba(6,8,15,.97), rgba(12,14,22,.97));
+      }
+    }
+
+    /* Subtle grain for clarity (NO animation) */
+    .grain{
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: .10;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
+      background-size: 220px 220px;
+    }
+
+    /* ===== Glass UI ===== */
+    .glass{
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(var(--blur)) saturate(155%);
+      -webkit-backdrop-filter: blur(var(--blur)) saturate(155%);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .glass-soft{
+      background: var(--glass-bg-2);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(calc(var(--blur) - 6px)) saturate(155%);
+      -webkit-backdrop-filter: blur(calc(var(--blur) - 6px)) saturate(155%);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-soft);
+    }
+    .muted{ color: var(--muted); }
+
+    .ios-btn{
+      border-radius: 18px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.12);
+      transition: transform .15s ease, opacity .15s ease;
+    }
+    .ios-btn:active{ transform: scale(.98); opacity: .9; }
+
+    .bar-chart-container{
+      height: 150px;
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+    }
+    .bar-item{
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      position: relative;
+    }
+    .bar{
+      width: 78%;
+      border-top-left-radius: 7px;
+      border-top-right-radius: 7px;
+      transition: height .25s ease-out;
+    }
+    .bar-label{
+      font-size: .75rem;
+      margin-top: 6px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .bar-count{
+      position: absolute;
+      top: -18px;
+      font-size: .75rem;
+      font-weight: 650;
+      color: var(--text);
+    }
+
+    .collapsible{ max-height: 0; overflow: hidden; transition: max-height .45s ease-in-out; }
+    .collapsible.active{ max-height: 900px; }
+
+    .loader{
+      border: 4px solid rgba(255,255,255,.4);
+      border-top: 4px solid rgba(99,102,241,.9);
+      border-radius: 50%;
+      width: 20px; height: 20px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0%{transform: rotate(0deg)} 100%{transform: rotate(360deg)} }
+
+    .modal{
+      display:none;
+      position:fixed;
+      z-index:50;
+      left:0; top:0;
+      width:100%; height:100%;
+      background: rgba(0,0,0,.35);
+      align-items:center; justify-content:center;
+      padding: 16px;
+    }
+    .modal.show{ display:flex; }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col items-center justify-start p-4 md:p-8">
+
+  <!-- static grain layer -->
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- Top bar（单机模式：无账号登入/云端同步） -->
+  <div class="w-full max-w-2xl flex justify-between items-center mb-4 px-1">
+    <div class="flex items-center gap-2">
+      <div class="text-base font-semibold tracking-tight">
+        WordTracker <span class="ml-2 text-xs px-2 py-0.5 rounded-full glass-soft">HUBERY</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span id="userStatus" class="text-sm muted">👤 单机模式</span>
+
+      <button id="settingsBtn" class="p-2 glass-soft" title="配置 AI 接口">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+      </button>
+
+      <button id="resetBtn" class="px-3 py-2 glass-soft text-sm ios-btn" title="清空本地数据">重置</button>
+    </div>
+  </div>
+
+  <div id="app" class="w-full max-w-2xl glass p-5 md:p-7 space-y-5 relative">
+    <div class="flex items-center justify-between gap-3">
+      <h1 class="text-2xl md:text-3xl font-bold tracking-tight">⭐ 单词复记录本</h1>
+
+      <!-- export/import -->
+      <div class="flex items-center gap-2">
+        <button id="exportBtn" class="px-3 py-2 glass-soft text-sm ios-btn">导出JSON</button>
+        <label class="px-3 py-2 glass-soft text-sm ios-btn cursor-pointer">
+          导入JSON
+          <input id="importInput" type="file" accept="application/json" class="hidden"/>
+        </label>
+      </div>
+    </div>
+
+    <!-- Overview stats -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="glass-soft p-4 text-center">
+        <div class="text-sm muted font-medium">累计复习次数</div>
+        <div id="totalRepetitions" class="text-2xl font-bold mt-1">0</div>
+      </div>
+      <div class="glass-soft p-4 text-center">
+        <div class="text-sm muted font-medium">累计学习时长(分钟)</div>
+        <div id="totalStudyTime" class="text-2xl font-bold mt-1">0</div>
+      </div>
+    </div>
+
+    <!-- Date query -->
+    <div class="glass-soft p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="font-semibold">按日期查询</div>
+        <div class="text-xs muted">统计：当天「去重单词数」+「复记次数」</div>
+      </div>
+
+      <div class="flex flex-col md:flex-row gap-2 md:items-center">
+        <input id="datePicker" type="date" class="flex-1 px-3 py-2 rounded-xl border border-white/40 bg-white/60 dark:bg-white/10 outline-none"/>
+        <button id="queryDateBtn" class="px-4 py-2 rounded-xl ios-btn bg-black/80 text-white dark:bg-white/85 dark:text-black">
+          查询当天
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-3 rounded-xl bg-white/55 dark:bg-white/10 border border-white/40">
+          <div class="text-xs muted">当天去重单词数</div>
+          <div id="dayUniqueWords" class="text-xl font-bold mt-1">0</div>
+        </div>
+        <div class="p-3 rounded-xl bg-white/55 dark:bg-white/10 border border-white/40">
+          <div class="text-xs muted">当天复记次数</div>
+          <div id="dayRepetitions" class="text-xl font-bold mt-1">0</div>
+        </div>
+      </div>
+
+      <div class="text-xs muted leading-relaxed">
+        提示：导出 JSON 可用于网盘备份，多设备时手动导入即可。
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="space-y-3">
+      <div class="text-lg font-semibold">记录您的复习单词</div>
+
+      <div class="flex gap-2">
+        <input id="wordInput" type="text" placeholder="输入刚刚复习的单词"
+          class="flex-1 px-4 py-3 rounded-2xl border border-white/45 bg-white/60 dark:bg-white/10 outline-none focus:ring-2 focus:ring-indigo-300/40"/>
+        <button id="defineBtn" class="px-4 py-3 rounded-2xl ios-btn bg-pink-500 text-white disabled:opacity-50" title="获取单词定义和例句 (AI)">
+          ✨ 查词
+        </button>
+      </div>
+
+      <button id="recordBtn"
+        class="w-full py-3.5 rounded-2xl ios-btn bg-[#007AFF] text-white font-semibold disabled:opacity-50">
+        记录
+      </button>
+    </div>
+
+    <!-- AI response -->
+    <div class="space-y-3">
+      <div id="llmResponse" class="glass-soft p-4 hidden"></div>
+      <div class="flex justify-center"><div id="aiLoader" class="hidden loader"></div></div>
+
+      <button id="summaryBtn" class="w-full py-3 rounded-2xl ios-btn bg-green-500 text-white font-semibold disabled:opacity-50">
+        ✨ 获取学习总结与建议
+      </button>
+    </div>
+
+    <!-- 7-day chart -->
+    <div class="glass-soft p-4">
+      <div class="flex items-center justify-between mb-3">
+        <div class="text-lg font-semibold">近 7 天复习次数</div>
+        <div class="text-xs muted">按天统计</div>
+      </div>
+      <div id="timeCurveChart" class="bar-chart-container">
+        <p class="muted text-center w-full">加载中...</p>
+      </div>
+    </div>
+
+    <!-- Word stats (collapsible) -->
+    <div class="glass-soft p-4">
+      <div class="flex justify-between items-center">
+        <div class="text-lg font-semibold">
+          单词复习统计（共 <span id="uniqueWordCount">0</span> 词）
+        </div>
+        <button id="toggleHistoryBtn" class="text-sm px-3 py-2 rounded-xl glass-soft ios-btn">
+          <span id="toggleText">展开查看</span>
+        </button>
+      </div>
+
+      <div id="wordStatsCollapse" class="collapsible mt-3">
+        <div class="pt-3 border-t border-white/40">
+          <div class="flex font-semibold text-sm muted pb-2">
+            <span class="w-1/2">单词</span>
+            <span class="w-1/4 text-center">次数</span>
+            <span class="w-1/4 text-right">上次复习</span>
+          </div>
+          <ul id="wordStatsList" class="space-y-1 text-sm max-h-80 overflow-y-auto pr-1">
+            <li class="muted text-center">加载统计数据...</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message toast -->
+    <div id="message-box"
+      class="p-3 text-center text-sm rounded-xl transition-all duration-300 hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 shadow-lg z-50 glass-soft">
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="glass w-full max-w-md p-6 relative">
+      <button class="close-modal-btn absolute top-3 right-3 p-2 rounded-xl glass-soft">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <h2 class="text-xl font-bold mb-4 text-center">⚙️ AI 接口配置</h2>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium mb-1 muted">AI 提供商</label>
+          <select id="apiProvider" class="w-full px-3 py-2 rounded-xl border border-white/40 bg-white/60 dark:bg-white/10 outline-none">
+            <option value="gemini">Google Gemini</option>
+            <option value="openai">OpenAI 兼容 (DeepSeek/Kimi/ChatGPT)</option>
+          </select>
+        </div>
+
+        <div id="geminiFields" class="text-xs muted p-3 rounded-xl bg-white/55 dark:bg-white/10 border border-white/40">
+          直接连接 Google Gemini（需要 API Key）。
+        </div>
+
+        <div id="openaiFields" class="space-y-2 hidden">
+          <div>
+            <label class="block text-sm font-medium mb-1 muted">API Base URL</label>
+            <input id="apiBaseUrl" class="w-full px-3 py-2 rounded-xl border border-white/40 bg-white/60 dark:bg-white/10 outline-none text-sm"
+              placeholder="https://api.openai.com/v1"/>
+            <div class="text-xs muted mt-1">例如：https://api.deepseek.com/v1、https://api.moonshot.cn/v1</div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1 muted">模型名称</label>
+            <input id="apiModelName" class="w-full px-3 py-2 rounded-xl border border-white/40 bg-white/60 dark:bg-white/10 outline-none text-sm"
+              placeholder="gpt-3.5-turbo"/>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1 muted">API Key</label>
+          <input id="apiKeyInput" type="password" class="w-full px-3 py-2 rounded-xl border border-white/40 bg-white/60 dark:bg-white/10 outline-none"
+            placeholder="sk-..."/>
+        </div>
+
+        <button id="saveSettingsBtn" class="w-full py-2 rounded-xl ios-btn bg-green-600 text-white font-semibold">
+          保存配置
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================================
+    // 1) 全局配置与状态（单机模式：无账号登入/云端同步）
+    // ==========================================================
+    const STORAGE_KEY = "word_tracker_data_single";
+    const CONFIG_KEY = "word_tracker_api_config";
+
+    let apiConfig = {
+      provider: 'gemini',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent',
+      modelName: 'gemini-2.5-flash-preview-09-2025',
+      apiKey: ''
+    };
+
+    const defaultData = {
+      repetitions: [],
+      stats: { totalRepetitions: 0, totalStudyTimeMinutes: 0, lastUpdated: 0 }
+    };
+
+    let appData = JSON.parse(JSON.stringify(defaultData));
+    let sessionTimer = null;
+
+    const els = {
+      messageBox: document.getElementById('message-box'),
+      recordBtn: document.getElementById('recordBtn'),
+      wordInput: document.getElementById('wordInput'),
+      defineBtn: document.getElementById('defineBtn'),
+      summaryBtn: document.getElementById('summaryBtn'),
+      llmResponse: document.getElementById('llmResponse'),
+      aiLoader: document.getElementById('aiLoader'),
+      userStatus: document.getElementById('userStatus'),
+      resetBtn: document.getElementById('resetBtn'),
+      settingsBtn: document.getElementById('settingsBtn'),
+
+      exportBtn: document.getElementById('exportBtn'),
+      importInput: document.getElementById('importInput'),
+
+      datePicker: document.getElementById('datePicker'),
+      queryDateBtn: document.getElementById('queryDateBtn'),
+      dayUniqueWords: document.getElementById('dayUniqueWords'),
+      dayRepetitions: document.getElementById('dayRepetitions'),
+
+      settingsModal: document.getElementById('settingsModal'),
+      apiProvider: document.getElementById('apiProvider'),
+      apiBaseUrl: document.getElementById('apiBaseUrl'),
+      apiModelName: document.getElementById('apiModelName'),
+      apiKeyInput: document.getElementById('apiKeyInput'),
+      saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+      geminiFields: document.getElementById('geminiFields'),
+      openaiFields: document.getElementById('openaiFields'),
+
+      totalRep: document.getElementById('totalRepetitions'),
+      totalTime: document.getElementById('totalStudyTime'),
+      chart: document.getElementById('timeCurveChart'),
+      list: document.getElementById('wordStatsList'),
+      uniqueCount: document.getElementById('uniqueWordCount'),
+      toggleBtn: document.getElementById('toggleHistoryBtn'),
+      collapse: document.getElementById('wordStatsCollapse'),
+      toggleText: document.getElementById('toggleText'),
+    };
+
+    function loadConfig() {
+      const stored = localStorage.getItem(CONFIG_KEY);
+      if (stored) apiConfig = JSON.parse(stored);
+    }
+    function saveConfig() {
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(apiConfig));
+      showMessage("API 配置已保存", "success");
+    }
+
+    function loadData() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      appData = stored ? JSON.parse(stored) : JSON.parse(JSON.stringify(defaultData));
+      els.userStatus.textContent = "👤 单机模式";
+      updateUI();
+      updateDateToToday();
+      queryByDate(els.datePicker.value);
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      updateUI();
+      queryByDate(els.datePicker.value);
+    }
+
+    function resetData() {
+      if (confirm("确定要清空本地数据吗？")) {
+        appData = JSON.parse(JSON.stringify(defaultData));
+        saveData();
+        showMessage("数据已重置", "info");
+      }
+    }
+
+    function updateUI() {
+      els.totalRep.textContent = appData.stats.totalRepetitions;
+      els.totalTime.textContent = appData.stats.totalStudyTimeMinutes;
+
+      const reps = [...appData.repetitions].sort((a,b)=>b.timestamp-a.timestamp);
+      renderWordStatistics(reps);
+      renderTimeCurve(reps);
+    }
+
+    function recordRepetition() {
+      const word = els.wordInput.value.trim();
+      if (!word) { showMessage("请输入单词", "warning"); return; }
+
+      appData.repetitions.push({ word, timestamp: Date.now() });
+      appData.stats.totalRepetitions++;
+      appData.stats.lastUpdated = Date.now();
+
+      saveData();
+      els.wordInput.value = '';
+      els.wordInput.focus();
+      showMessage(`"${word}" 记录成功!`, "success");
+    }
+
+    function startSessionTimer() {
+      if (sessionTimer) clearInterval(sessionTimer);
+      sessionTimer = setInterval(()=>{
+        appData.stats.totalStudyTimeMinutes++;
+        saveData();
+      }, 60000);
+    }
+
+    function renderWordStatistics(repetitions) {
+      els.list.innerHTML = '';
+      if (repetitions.length === 0) {
+        els.list.innerHTML = '<li class="muted text-center">暂无数据</li>';
+        els.uniqueCount.textContent = 0;
+        return;
+      }
+
+      const aggregated = repetitions.reduce((acc, item)=>{
+        const w = (item.word || "").toLowerCase();
+        if (!acc[w]) acc[w] = { word: item.word, count: 0, lastTimestamp: 0 };
+        acc[w].count++;
+        if (item.timestamp > acc[w].lastTimestamp) acc[w].lastTimestamp = item.timestamp;
+        return acc;
+      }, {});
+
+      const sorted = Object.values(aggregated).sort((a,b)=>b.count-a.count);
+      els.uniqueCount.textContent = sorted.length;
+
+      sorted.forEach(stat=>{
+        const date = new Date(stat.lastTimestamp).toLocaleDateString('zh-CN', {month:'numeric', day:'numeric'});
+        const li = document.createElement('li');
+        li.className = 'flex items-center p-2 rounded-xl hover:bg-white/40 dark:hover:bg-white/5 transition border border-white/0';
+        li.innerHTML = `
+          <span class="w-1/2 font-semibold">${escapeHtml(stat.word)}</span>
+          <span class="w-1/4 text-center font-bold text-xs px-2 py-1 rounded-full bg-white/55 dark:bg-white/10 border border-white/35">${stat.count}次</span>
+          <span class="w-1/4 text-right text-xs muted">${date}</span>
+        `;
+        els.list.appendChild(li);
+      });
+    }
+
+    function renderTimeCurve(repetitions) {
+      els.chart.innerHTML = '';
+      const dayCounts = {};
+      const dayLabels = [];
+      const today = new Date(); today.setHours(0,0,0,0);
+
+      for (let i=6;i>=0;i--){
+        const d = new Date(today);
+        d.setDate(today.getDate()-i);
+        const k = d.toISOString().split('T')[0];
+        dayCounts[k]=0;
+        dayLabels.push(d.toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'}));
+      }
+
+      repetitions.forEach(item=>{
+        const d = new Date(item.timestamp);
+        d.setHours(0,0,0,0);
+        const k = d.toISOString().split('T')[0];
+        if (dayCounts[k] !== undefined) dayCounts[k]++;
+      });
+
+      const counts = Object.values(dayCounts);
+      const max = Math.max(...counts, 1);
+      const sortedKeys = Object.keys(dayCounts).sort();
+
+      sortedKeys.forEach((k,i)=>{
+        const count = dayCounts[k];
+        const height = (count / max) * 90;
+        const div = document.createElement('div');
+        div.className = 'bar-item';
+        div.innerHTML = `
+          <div class="bar-count ${count>0?'':'hidden'}">${count}</div>
+          <div class="bar" style="height:${height}%; background:${count>0?'rgba(99,102,241,.88)':'rgba(255,255,255,.35)'}; border:1px solid rgba(255,255,255,.35)"></div>
+          <div class="bar-label">${dayLabels[i]}</div>
+        `;
+        els.chart.appendChild(div);
+      });
+    }
+
+    function updateDateToToday(){
+      const t = new Date();
+      const yyyy = t.getFullYear();
+      const mm = String(t.getMonth()+1).padStart(2,'0');
+      const dd = String(t.getDate()).padStart(2,'0');
+      els.datePicker.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    function queryByDate(yyyy_mm_dd){
+      if (!yyyy_mm_dd) return;
+
+      const start = new Date(yyyy_mm_dd + "T00:00:00").getTime();
+      const end = new Date(yyyy_mm_dd + "T23:59:59.999").getTime();
+
+      const dayItems = appData.repetitions.filter(r => r.timestamp >= start && r.timestamp <= end);
+      const repetitionCount = dayItems.length;
+
+      const unique = new Set(dayItems.map(x => (x.word || "").toLowerCase().trim()).filter(Boolean));
+      const uniqueCount = unique.size;
+
+      els.dayUniqueWords.textContent = uniqueCount;
+      els.dayRepetitions.textContent = repetitionCount;
+    }
+
+    function exportJSON(){
+      const payload = { version: 1, exportedAt: Date.now(), data: appData };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `wordtracker_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showMessage("已导出 JSON", "success");
+    }
+
+    async function importJSON(file){
+      try{
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        const incoming = parsed.data || parsed;
+
+        if (!incoming || !incoming.repetitions || !incoming.stats){
+          showMessage("导入失败：文件结构不正确", "error");
+          return;
+        }
+
+        appData = incoming;
+        saveData();
+        showMessage("导入成功 ✅", "success");
+      }catch(e){
+        showMessage("导入失败：" + e.message, "error");
+      }
+    }
+
+    async function callLLM(userQuery, systemPrompt) {
+      if (!apiConfig.apiKey) {
+        showMessage("请先点击右上角⚙️配置 API Key", "error");
+        openModal(els.settingsModal);
+        throw new Error("No API Key");
+      }
+      if (apiConfig.provider === 'gemini') return await callGemini(userQuery, systemPrompt);
+      return await callOpenAICompatible(userQuery, systemPrompt);
+    }
+
+    async function callGemini(userQuery, systemPrompt) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiConfig.apiKey}`;
+      const payload = { contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
+
+      const response = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      if (!response.ok) throw new Error(`Gemini Error: ${response.status}`);
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text;
+    }
+
+    async function callOpenAICompatible(userQuery, systemPrompt) {
+      const baseUrl = (apiConfig.baseUrl || '').replace(/\/$/, '');
+      const url = `${baseUrl}/chat/completions`;
+
+      const payload = {
+        model: apiConfig.modelName,
+        messages: [{ role:"system", content: systemPrompt }, { role:"user", content: userQuery }],
+        temperature: 0.7
+      };
+
+      const response = await fetch(url, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${apiConfig.apiKey}` },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`API Error ${response.status}: ${err}`);
+      }
+      const data = await response.json();
+      return data.choices?.[0]?.message?.content;
+    }
+
+    async function getWordDefinitionAndExamples() {
+      const word = els.wordInput.value.trim();
+      if (!word) { showMessage("请输入单词", "warning"); return; }
+
+      setAiLoading(true);
+
+      const systemPrompt = `你是一个专业的英语词典助手。请提供单词的以下信息：
+1. 音标 (IPA)
+2. 词性 (Part of Speech)
+3. 简洁的中文定义
+4. 两个清晰的英文例句
+
+请严格使用以下 Markdown 格式返回（不要包含其他文本）：
+**音标：** /ipa/
+**词性：** n. (或 v. adj. 等)
+**定义：** 中文定义文本
+**例句：**
+- Example 1
+- Example 2`;
+
+      const userQuery = `请解析单词 "${word}"`;
+
+      try {
+        const text = await callLLM(userQuery, systemPrompt);
+
+        let ipa="", pos="", def="", examplesHtml="";
+        const lines = (text || "").split('\n');
+        let inExamples = false;
+
+        lines.forEach(line=>{
+          if (line.includes('**音标：**')) ipa = line.replace('**音标：**','').trim();
+          else if (line.includes('**词性：**')) pos = line.replace('**词性：**','').trim();
+          else if (line.includes('**定义：**')) def = line.replace('**定义：**','').trim();
+          else if (line.includes('**例句：**')) inExamples = true;
+          else if (inExamples && line.trim().startsWith('-')) examplesHtml += `<li class="mb-1">${escapeHtml(line.replace('-', '').trim())}</li>`;
+        });
+
+        els.llmResponse.innerHTML = `
+          <div class="space-y-3">
+            <div class="flex items-baseline justify-between border-b border-white/40 pb-2">
+              <div class="text-2xl font-bold">${escapeHtml(word)}</div>
+              <div class="text-sm muted font-mono px-2 py-1 rounded-xl bg-white/55 dark:bg-white/10 border border-white/35">${escapeHtml(ipa)}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/15 border border-white/35">${escapeHtml(pos)}</span>
+              <div class="font-medium">${escapeHtml(def)}</div>
+            </div>
+            <div class="p-3 rounded-2xl bg-white/55 dark:bg-white/10 border border-white/35">
+              <div class="text-xs muted font-bold mb-1 uppercase tracking-wider">例句</div>
+              <ul class="list-disc list-inside text-sm">${examplesHtml}</ul>
+            </div>
+          </div>
+        `;
+        els.llmResponse.classList.remove('hidden');
+      } catch (error) {
+        console.error(error);
+        showMessage(`请求失败: ${error.message}`, "error");
+      } finally {
+        setAiLoading(false);
+      }
+    }
+
+    async function generateStudySummary() {
+      if (appData.stats.totalRepetitions === 0) { showMessage("请先记录一些单词", "warning"); return; }
+      setAiLoading(true);
+
+      const aggregatedStats = appData.repetitions.reduce((acc, item)=>{
+        const w = (item.word || '').toLowerCase();
+        acc[w] = (acc[w] || 0) + 1;
+        return acc;
+      }, {});
+      const topWords = Object.entries(aggregatedStats)
+        .sort((a,b)=>b[1]-a[1])
+        .slice(0,3)
+        .map(([w,c])=>`${w}(${c})`)
+        .join(', ');
+
+      const systemPrompt = "你是一位学习教练。根据数据生成简短鼓励性总结和3条建议。";
+      const userQuery = `复习${appData.stats.totalRepetitions}次，时长${appData.stats.totalStudyTimeMinutes}分，常错：${topWords}`;
+
+      try {
+        const text = await callLLM(userQuery, systemPrompt);
+        els.llmResponse.innerHTML = `
+          <div class="space-y-2">
+            <div class="text-lg font-bold">🎉 学习总结</div>
+            <div class="text-sm leading-relaxed">${escapeHtml(text || "暂无").replace(/\n/g,'<br>')}</div>
+          </div>
+        `;
+        els.llmResponse.classList.remove('hidden');
+      } catch (error) {
+        showMessage(`总结失败: ${error.message}`, "error");
+      } finally {
+        setAiLoading(false);
+      }
+    }
+
+    function setAiLoading(loading){
+      if (loading){
+        els.defineBtn.disabled = true;
+        els.summaryBtn.disabled = true;
+        els.llmResponse.classList.add('hidden');
+        els.llmResponse.innerHTML = '';
+        els.aiLoader.classList.remove('hidden');
+      } else {
+        els.aiLoader.classList.add('hidden');
+        els.defineBtn.disabled = false;
+        els.summaryBtn.disabled = false;
+      }
+    }
+
+    function showMessage(msg, type='info'){
+      els.messageBox.textContent = msg;
+      els.messageBox.classList.remove('hidden');
+
+      let bg = 'bg-white/70 text-black';
+      if (type==='success') bg='bg-green-500/20 text-green-900 dark:text-green-100';
+      if (type==='error') bg='bg-red-500/20 text-red-900 dark:text-red-100';
+      if (type==='warning') bg='bg-yellow-500/20 text-yellow-900 dark:text-yellow-100';
+      if (type==='info') bg='bg-indigo-500/15 text-indigo-900 dark:text-indigo-100';
+
+      els.messageBox.className =
+        `p-3 text-center text-sm rounded-xl transition-all duration-300 fixed bottom-4 left-1/2 transform -translate-x-1/2 shadow-lg z-50 glass-soft ${bg}`;
+      setTimeout(()=>els.messageBox.classList.add('hidden'), 3200);
+    }
+
+    function openModal(modal){ modal.classList.add('show'); }
+    function closeModal(modal){ modal.classList.remove('show'); }
+
+    function updateSettingsUI(){
+      els.apiProvider.value = apiConfig.provider;
+      els.apiKeyInput.value = apiConfig.apiKey;
+      els.apiBaseUrl.value = apiConfig.baseUrl || '';
+      els.apiModelName.value = apiConfig.modelName || '';
+      if (apiConfig.provider === 'gemini'){
+        els.geminiFields.classList.remove('hidden');
+        els.openaiFields.classList.add('hidden');
+      }else{
+        els.geminiFields.classList.add('hidden');
+        els.openaiFields.classList.remove('hidden');
+      }
+    }
+
+    function handleSaveSettings(){
+      const provider = els.apiProvider.value;
+      const key = els.apiKeyInput.value.trim();
+      const url = els.apiBaseUrl.value.trim();
+      const model = els.apiModelName.value.trim();
+
+      if (!key){ showMessage("请输入 API Key", "error"); return; }
+      if (provider==='openai' && (!url || !model)){ showMessage("OpenAI 模式需要 URL 和模型名", "error"); return; }
+
+      apiConfig = { provider, apiKey: key, baseUrl: url || apiConfig.baseUrl, modelName: model || apiConfig.modelName };
+      saveConfig();
+      closeModal(els.settingsModal);
+    }
+
+    function escapeHtml(str){
+      return String(str || '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+    }
+
+    function init(){
+      loadConfig();
+      loadData();
+      startSessionTimer();
+
+      els.recordBtn.onclick = recordRepetition;
+      els.wordInput.onkeydown = (e)=>{ if (e.key==='Enter') recordRepetition(); };
+
+      els.defineBtn.onclick = getWordDefinitionAndExamples;
+      els.summaryBtn.onclick = generateStudySummary;
+
+      els.toggleBtn.onclick = ()=>{
+        const active = els.collapse.classList.toggle('active');
+        els.toggleText.textContent = active ? '折叠收起' : '展开查看';
+      };
+
+      els.resetBtn.onclick = resetData;
+
+      els.settingsBtn.onclick = ()=>{
+        updateSettingsUI();
+        openModal(els.settingsModal);
+      };
+      els.apiProvider.onchange = ()=>{
+        apiConfig.provider = els.apiProvider.value;
+        updateSettingsUI();
+      };
+      els.saveSettingsBtn.onclick = handleSaveSettings;
+
+      document.querySelectorAll('.close-modal-btn').forEach(btn=>{
+        btn.onclick = (e)=> closeModal(e.target.closest('.modal'));
+      });
+
+      els.queryDateBtn.onclick = ()=> queryByDate(els.datePicker.value);
+      els.datePicker.onchange = ()=> queryByDate(els.datePicker.value);
+
+      els.exportBtn.onclick = exportJSON;
+      els.importInput.onchange = (e)=>{
+        const f = e.target.files?.[0];
+        if (f) importJSON(f);
+        e.target.value = "";
+      };
+    }
+
+    window.onload = init;
+  </script>
+
+</body>
+</html>
